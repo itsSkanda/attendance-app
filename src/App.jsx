@@ -521,32 +521,7 @@ function DropZone({ onFiles }) {
       <div className="dropzone-icon-wrap">
         <Upload size={24} style={{ color: dragging ? 'var(--green)' : 'var(--text-muted)' }} />
       </div>
-      <div className="dropzone-title">Drop your Excel attendance sheet here</div>
-      <div className="dropzone-sub">
-        Supports the full-section format (P1.xlsx) and the low-attendance report format
-      </div>
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '6px' }}>
-        <span className="dropzone-btn">Browse files</span>
-        <button
-          type="button"
-          className="sample-load-btn"
-          onClick={async (e) => {
-            e.stopPropagation();
-            try {
-              const res = await fetch('/P1.xlsx');
-              const blob = await res.blob();
-              const sampleFile = new File([blob], 'P1.xlsx', {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-              });
-              onFiles([sampleFile]);
-            } catch (err) {
-              console.error('Failed to load sample P1.xlsx', err);
-            }
-          }}
-        >
-          Load example (P1.xlsx)
-        </button>
-      </div>
+      <div className="dropzone-title">Drop your Excel attendance sheet here or click to browse</div>
     </div>
   );
 }
@@ -685,7 +660,7 @@ export default function App() {
       document.documentElement.style.setProperty('--bg-elevated', '#F1F5F9');
       document.documentElement.style.setProperty('--bg-hover', 'rgba(0,0,0,0.04)');
       document.documentElement.style.setProperty('--border', 'rgba(0,0,0,0.08)');
-      document.documentElement.style.setProperty('--border-strong', 'rgba(0,0,0,0.15)');
+      document.documentElement.style.setProperty('--border-strong', 'rgba(0,0,0,0.18)');
       document.documentElement.style.setProperty('--text-primary', '#0F172A');
       document.documentElement.style.setProperty('--text-secondary', '#475569');
       document.documentElement.style.setProperty('--text-muted', '#94A3B8');
@@ -693,7 +668,8 @@ export default function App() {
       document.documentElement.style.setProperty('--green-dim', 'rgba(22,163,74,0.1)');
       document.documentElement.style.setProperty('--green-border', 'rgba(22,163,74,0.22)');
       document.documentElement.style.setProperty('--bg-sidebar', '#FFFFFF');
-      document.documentElement.style.setProperty('--bg-input', '#F1F5F9');
+      document.documentElement.style.setProperty('--bg-input', '#FFFFFF');
+      document.documentElement.style.setProperty('--bg-topnav', 'rgba(255, 255, 255, 0.95)');
     } else {
       // Reset to dark
       document.documentElement.style.setProperty('--bg-page', '#080C10');
@@ -701,13 +677,16 @@ export default function App() {
       document.documentElement.style.setProperty('--bg-elevated', '#131920');
       document.documentElement.style.setProperty('--bg-hover', 'rgba(255,255,255,0.04)');
       document.documentElement.style.setProperty('--border', 'rgba(255,255,255,0.07)');
-      document.documentElement.style.setProperty('--border-strong', 'rgba(255,255,255,0.13)');
+      document.documentElement.style.setProperty('--border-strong', 'rgba(255,255,255,0.15)');
       document.documentElement.style.setProperty('--text-primary', '#F8FAFC');
       document.documentElement.style.setProperty('--text-secondary', '#94A3B8');
       document.documentElement.style.setProperty('--text-muted', '#64748B');
       document.documentElement.style.setProperty('--green', '#22C55E');
       document.documentElement.style.setProperty('--green-dim', 'rgba(34,197,94,0.12)');
       document.documentElement.style.setProperty('--green-border', 'rgba(34,197,94,0.22)');
+      document.documentElement.style.setProperty('--bg-sidebar', '#0C1014');
+      document.documentElement.style.setProperty('--bg-input', '#12181F');
+      document.documentElement.style.setProperty('--bg-topnav', 'rgba(8, 12, 16, 0.88)');
     }
   }, [isDark]);
 
@@ -796,6 +775,7 @@ export default function App() {
   const [exportSection, setExportSection] = useState('');
   const [exportFacultyAdvisor, setExportFacultyAdvisor] = useState('');
   const [exportAcademicAdvisor, setExportAcademicAdvisor] = useState('');
+  const [exportTotalStudents, setExportTotalStudents] = useState('');
   const [exportMonth, setExportMonth] = useState('October 2026');
   const [exportSuccessMsg, setExportSuccessMsg] = useState('');
 
@@ -803,10 +783,10 @@ export default function App() {
   useEffect(() => {
     if (!activeFile) return;
     const meta = activeFile.sheets[0]?.meta || {};
-    const detectedSection = meta.section || activeFile.name.replace(/\.(xlsx|xls|csv)$/i, '').split('_')[0] || 'P1';
-    setExportSection(detectedSection);
+    setExportSection(''); // Do not autofill section with excel sheet or file name
     if (meta.facultyAdvisor) setExportFacultyAdvisor(meta.facultyAdvisor);
     if (meta.academicAdvisor) setExportAcademicAdvisor(meta.academicAdvisor);
+    setExportTotalStudents(''); // Always ask user directly, do not guess
     if (activeFile.sheets[0]?.sheetName && activeFile.sheets[0].sheetName !== 'Sheet1') {
       setExportMonth(activeFile.sheets[0].sheetName);
     }
@@ -831,6 +811,7 @@ export default function App() {
     const finalSection = (exportSection || '').trim();
     const finalAdvisor = (exportFacultyAdvisor || '').trim();
     const finalAcademic = (exportAcademicAdvisor || '').trim();
+    const finalTotalStudents = (exportTotalStudents || '').trim();
 
     // Decode base64 filled-template
     const binaryString = window.atob(FILLED_TEMPLATE_BASE64);
@@ -865,9 +846,9 @@ export default function App() {
     ws.getCell('C5').value = finalAcademic ? `Academic Advisor: ${finalAcademic}` : '';
     ws.getCell('E5').value = finalAdvisor ? `FACULTY ADVISOR: ${finalAdvisor}` : 'FACULTY ADVISOR:';
 
-    // 2. Fill Row 6: Total Students & Low count header (do not fill what is unknown)
+    // 2. Fill Row 6: Total Students (only fill what user specified, never guess)
     ws.getCell('A6').value = 'TOTAL NUMBER OF';
-    ws.getCell('C6').value = totalStudents ? ` STUDENTS: ${totalStudents}` : '';
+    ws.getCell('C6').value = finalTotalStudents ? ` STUDENTS: ${finalTotalStudents}` : '';
     ws.getCell('E6').value = 'Number of Students Less than 75% (Even in 1 subject): ';
 
     // 3. Unmerge all old student rows >= 8
@@ -886,11 +867,14 @@ export default function App() {
       } catch (e) {}
     });
 
-    // 4. Clear rows 8 to 250
+    // 4. Clear rows 8 to 250 and remove any background fills (e.g. blue cells from template)
     for (let r = 8; r <= 250; r++) {
       const row = ws.getRow(r);
       for (let c = 1; c <= 8; c++) {
-        row.getCell(c).value = null;
+        const cell = row.getCell(c);
+        cell.value = null;
+        delete cell.fill;
+        cell.fill = { type: 'pattern', pattern: 'none' };
       }
     }
 
@@ -939,11 +923,13 @@ export default function App() {
         row.getCell(6).value =
           sub.pct !== null && sub.pct !== undefined ? Number(sub.pct.toFixed(2)) : '';
 
-        // Apply borders, font, and alignment to all 8 cells in this row
+        // Apply borders, font, clean fill, and alignment to all 8 cells in this row
         for (let c = 1; c <= 8; c++) {
           const cell = row.getCell(c);
           cell.border = thinBorder;
           cell.font = fontTimes12;
+          delete cell.fill;
+          cell.fill = { type: 'pattern', pattern: 'none' };
           cell.alignment = {
             vertical: 'middle',
             horizontal: c === 3 || c === 5 ? 'left' : (c === 4 || c === 6 ? 'left' : 'center'),
@@ -999,6 +985,7 @@ export default function App() {
     exportSection,
     exportFacultyAdvisor,
     exportAcademicAdvisor,
+    exportTotalStudents,
     exportMonth,
   ]);
 
@@ -1038,9 +1025,6 @@ export default function App() {
             </div>
             <h1 className="page-title">Attendance Records</h1>
           </div>
-          <p className="page-subtitle">
-            Upload monthly attendance sheets to view and filter student data. Both full-section and low-attendance report formats are supported.
-          </p>
         </div>
 
         {/* Error banner */}
@@ -1231,7 +1215,6 @@ export default function App() {
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. P1"
                       value={exportSection}
                       onChange={(e) => setExportSection(e.target.value)}
                       required
@@ -1244,30 +1227,40 @@ export default function App() {
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. October 2026"
                       value={exportMonth}
                       onChange={(e) => setExportMonth(e.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Faculty Advisor</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Dr. A. ANBARASI"
-                    value={exportFacultyAdvisor}
-                    onChange={(e) => setExportFacultyAdvisor(e.target.value)}
-                  />
+                <div className="modal-fields-grid">
+                  <div className="form-group">
+                    <label className="form-label">Total Number of Students</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      className="form-input"
+                      value={exportTotalStudents}
+                      onChange={(e) => setExportTotalStudents(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Faculty Advisor</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={exportFacultyAdvisor}
+                      onChange={(e) => setExportFacultyAdvisor(e.target.value)}
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Academic Advisor (Optional)</label>
+                  <label className="form-label">Academic Advisor</label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="e.g. Dr. G. ABIRAMI"
                     value={exportAcademicAdvisor}
                     onChange={(e) => setExportAcademicAdvisor(e.target.value)}
                   />
@@ -1281,7 +1274,7 @@ export default function App() {
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Total Students</span>
-                    <span className="summary-val">{totalStudents}</span>
+                    <span className="summary-val">{exportTotalStudents.trim() || '—'}</span>
                   </div>
                   <div className="summary-item">
                     <span className="summary-label">Excluded Subjects</span>
