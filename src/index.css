@@ -651,6 +651,217 @@ html, body {
   color: var(--green);
 }
 
+.subject-filter-grid {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 860px) {
+  .subject-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Deselected Sidebar (Left Panel) ── */
+.deselected-sidebar {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+}
+
+.deselected-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.deselected-sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dot-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+  flex-shrink: 0;
+}
+
+.deselected-count-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid var(--red-border);
+}
+
+.deselected-sidebar-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.deselected-scroll-list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.deselected-empty-state {
+  padding: 30px 12px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.deselected-empty-state span {
+  font-size: 10.5px;
+  opacity: 0.75;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.deselected-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  gap: 8px;
+}
+
+.deselected-card:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+  transform: translateX(2px);
+}
+
+.deselected-card.is-zero {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.deselected-card.is-zero:hover {
+  border-color: var(--red);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.deselected-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.deselected-card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.deselected-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.deselected-card.is-zero .deselected-code {
+  color: var(--red);
+}
+
+.zero-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.deselected-name {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.deselected-meta-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.deselected-action-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.deselected-card:hover .deselected-action-btn {
+  border-color: var(--green-border);
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+/* ── All Subjects (Right Panel) ── */
+.all-subjects-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.all-subjects-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.all-subjects-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .subject-chips {
   display: flex;
   flex-wrap: wrap;
@@ -682,6 +893,26 @@ html, body {
   opacity: 1;
 }
 
+.subject-chip.has-zero {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.subject-chip.has-zero:hover {
+  border-color: var(--red);
+}
+
+.chip-zero-badge {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .chip-checkbox {
   width: 14px;
   height: 14px;
@@ -699,28 +930,6 @@ html, body {
 .chip-checkbox.unchecked {
   border: 1px solid var(--border-strong);
   background: transparent;
-}
-
-.chip-low-badge {
-  padding: 1px 5px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.exclusion-notice {
-  margin-top: 10px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: rgba(245,158,11,0.06);
-  border: 1px solid rgba(245,158,11,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-secondary);
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 /* ── Sheet Display ───────────────────────────────────────── */
