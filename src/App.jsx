@@ -30,6 +30,69 @@ export const SUBJECT_NAMES = {
   '21CSE745P': 'FOUNDATIONS OF DATA CENTRE INFRASTRUCTURE AND MANAGEMENT',
   '21CSE296P': 'IOS APP PROTOTYPE DESIGN AND DEVELOPMENT',
   '21MGO112T': 'ENTREPRENEURIAL FINANCE',
+
+  // Professional & Open Electives (AY 2026-27 ODD - Computer Science and Engineering)
+  '21CSE214T': 'GPU Computing',
+  '21CSE216P': 'Linux and Container Technologies',
+  '21CSE305P': 'SerBot : Project-Based Learning in Robotics',
+  '21CSE306P': 'Applied Generative AI',
+  '21CSE307J': 'Quantum Machine Learning',
+  '21CSE311J': 'Cloud Based Remote Sensing and GIS',
+  '21CSE351T': 'Computational Logic',
+  '21CSE357T': 'Distributed Computing',
+  '21CSE359T': 'Information Storage and Management',
+  '21CSE361T': 'Database Security and Privacy',
+  '21CSE389T': 'Environmental Hydrology For Data Science',
+  '21CSE735P': 'Workflow Automation Engineering',
+  '21CSE737J': 'IoT data analysis with Cloud ML',
+  '21CSE744P': 'Building AI Agents for Digital Customer Experience Systems',
+  '21IPE335J': 'Functional Testing and Programming',
+  '21IPE341P': 'ERP Application Development and Enterprise Data Platforms',
+  '21IPE341T': 'Mastering the Data Paradox with AI and ML',
+  '21IPE401J': 'Capstone Program in Electronic Cooling',
+  '21ASO301T': 'Elements of Aeronautics',
+  '21AUO101T': 'Hybrid and Electric Vehicles',
+  '21BMO121T': 'Fundamentals of Biomedical Engineering',
+  '21BTO106T': 'Waste to Wealth to Wheels',
+  '21CEO303T': 'Smart City and Infrastructure',
+  '21CEO306T': 'Environmental Impact Assessment',
+  '21CEO307T': 'Municipal Solid Waste Management',
+  '21CEO308T': 'Disaster Mitigation and Management',
+  '21CEO310T': 'Global Warming and Climate Change',
+  '21CEO322T': 'Remote sensing and GIS applications in Engineering',
+  '21CEO403T': 'Integrated Waste Management',
+  '21CEO404T': 'Principles of Sustainable Development',
+  '21ECO101T': 'Short-Range Wireless Communication',
+  '21ECO103T': 'Modern Wireless Communication Systems',
+  '21ECO105T': 'Fiber Optics and Optoelectronics',
+  '21ECO110T': 'Semiconductor Packaging Technologies',
+  '21EEO303T': 'E-waste Management',
+  '21EEO307T': 'Clean and Green Energy',
+  '21EEO308T': 'Smart Cities and Communities',
+  '21GEO105T': 'Biology for Everyday life',
+  '21MEO101T': 'Fundamentals of Composite Materials',
+  '21MEO102T': 'Reverse Engineering and 3D Printing',
+  '21MEO103T': 'Fundamentals of Biomechanics',
+  '21MEO104T': 'TQM and Reliability Engineering',
+  '21MEO105T': 'Occupational Safety and Disaster Management',
+  '21MEO106T': 'Introduction to Robotics',
+  '21MEO110T': 'Energy Systems for Sustainable Buildings',
+  '21MEO112T': 'Renewable Energy Sources and Application',
+  '21MEO114T': 'Solar Energy for Societal Applications',
+  '21MEO115T': 'Introduction to Drones',
+  '21MGO103T': 'Management Information Systems',
+  '21MGO107T': 'Flexible Work Models and Employee Well Being',
+  '21NTO301T': 'Applications of Nanotechnology',
+  '21NTO304T': 'Environmental Nanotechnology',
+  '21NTO307T': 'Nanocomputing',
+  '21NTO308T': 'Smart Sensor Systems',
+  '21NTO309T': '2D Materials and Applications',
+  // Aliases in case typed with leading I
+  '21INTO301T': 'Applications of Nanotechnology',
+  '21INTO304T': 'Environmental Nanotechnology',
+  '21INTO307T': 'Nanocomputing',
+  '21INTO308T': 'Smart Sensor Systems',
+  '21INTO309T': '2D Materials and Applications',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,12 +101,96 @@ export const SUBJECT_NAMES = {
 
 const clean = (v) => (v == null ? '' : String(v).replace(/[\r\n]+/g, ' ').trim());
 
+export function getBaseCourseCode(code) {
+  if (!code) return '';
+  return clean(code)
+    .toUpperCase()
+    .replace(/[\s_\-/]*\((?:THEORY|PRACTICAL|LAB|LABORATORY|TH|PR|T|L|P)\)$/i, '')
+    .replace(/[\s_\-/]+(?:THEORY|PRACTICAL|LAB|LABORATORY|TH|PR|T|L|P)$/i, '')
+    .trim();
+}
+
+export function getCourseComponent(code, name = '') {
+  const combined = `${code || ''} ${name || ''}`.toUpperCase();
+  if (/\b(?:PRACTICAL|LAB|LABORATORY)\b|\((?:P|L|PRAC)\)|\/(?:L|P)\b/i.test(combined)) {
+    return 'L'; // Lab / Practical
+  }
+  if (/\b(?:THEORY|TH)\b|\((?:T|TH)\)|\/T\b/i.test(combined)) {
+    return 'T'; // Theory
+  }
+  return null;
+}
+
+export function normalizeSubjectCode(code, name = '') {
+  if (!code) return '';
+  const cleanCode = clean(code).toUpperCase();
+  const base = getBaseCourseCode(cleanCode);
+  const comp = getCourseComponent(cleanCode, name);
+  if (comp) {
+    return `${base}(${comp})`;
+  }
+  return cleanCode;
+}
+
+export function resolveSubjectName(code, subName = '') {
+  if (subName && subName.trim()) return subName.trim();
+  if (!code) return '';
+  const cleanCode = clean(code).toUpperCase().trim();
+  if (SUBJECT_NAMES[cleanCode]) return SUBJECT_NAMES[cleanCode];
+
+  const baseFromParens = cleanCode.split('(')[0].trim();
+  const base = getBaseCourseCode(cleanCode);
+  const baseName = SUBJECT_NAMES[baseFromParens] || SUBJECT_NAMES[base];
+  if (baseName) {
+    const comp = getCourseComponent(cleanCode, subName);
+    if (comp && (baseFromParens.endsWith('J') || (base && base.endsWith('J')))) {
+      if (comp === 'L') return `${baseName} (Practical)`;
+      if (comp === 'T') return `${baseName} (Theory)`;
+    }
+    return baseName;
+  }
+  return '';
+}
+
+export function disambiguateStudentSubjects(subjects = []) {
+  if (!subjects || subjects.length === 0) return [];
+  const baseCounts = {};
+  subjects.forEach((s) => {
+    const base = getBaseCourseCode(s.code);
+    baseCounts[base] = (baseCounts[base] || 0) + 1;
+  });
+
+  const occurrence = {};
+  return subjects.map((s) => {
+    const base = getBaseCourseCode(s.code);
+    const existingComp = getCourseComponent(s.code, s.name);
+
+    if (existingComp) {
+      const code = `${base}(${existingComp})`;
+      const name = resolveSubjectName(code, s.name);
+      return { ...s, code, name };
+    }
+
+    if (baseCounts[base] > 1) {
+      occurrence[base] = (occurrence[base] || 0) + 1;
+      const comp = occurrence[base] === 1 ? 'T' : 'L';
+      const code = `${base}(${comp})`;
+      const name = resolveSubjectName(code, s.name);
+      return { ...s, code, name };
+    }
+
+    return s;
+  });
+}
+
 /**
  * FORMAT A — Full-section attendance (e.g. P1.xlsx)
  * Row 0: headers; Row 1+: data. Subject cells packed as "CODE\r\nPCT".
  */
 function parseFormatA(rows) {
   const students = [];
+  const headerRow = rows[0] || [];
+
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     if (!r || r.every((c) => c == null || c === '')) continue;
@@ -58,15 +205,43 @@ function parseFormatA(rows) {
       const cell = r[c];
       if (cell == null || cell === '') continue;
       const cellStr = String(cell).trim();
-      const splitChar = cellStr.includes('\r\n') ? '\r\n' : cellStr.includes('\n') ? '\n' : null;
-      if (splitChar) {
-        const parts = cellStr.split(splitChar);
-        const code = parts[0].trim();
-        const pct = parseFloat(parts[1]);
-        if (code) subjects.push({ code, pct: isNaN(pct) ? null : pct });
+      if (!cellStr) continue;
+
+      let code = '';
+      let pct = null;
+
+      if (cellStr.includes('\n') || cellStr.includes('\r')) {
+        const parts = cellStr.split(/[\r\n]+/).map((p) => p.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          code = parts[0];
+          const parsed = parseFloat(parts[1].replace('%', '').trim());
+          pct = isNaN(parsed) ? 0 : parsed;
+        } else if (parts.length === 1) {
+          code = parts[0];
+          pct = 0;
+        }
+      } else if (/^[A-Z0-9_-]+\s+[0-9.]+%?$/i.test(cellStr)) {
+        const parts = cellStr.split(/\s+/);
+        code = parts[0].trim();
+        const parsed = parseFloat(parts[1].replace('%', '').trim());
+        pct = isNaN(parsed) ? 0 : parsed;
+      } else if (!isNaN(parseFloat(cellStr.replace('%', '').trim()))) {
+        const hdrVal = headerRow[c] ? clean(headerRow[c]) : '';
+        const hdrCode = hdrVal.split(/[\r\n\s(]+/)[0].trim().toUpperCase();
+        if (hdrCode && /^[A-Z0-9]{4,15}$/i.test(hdrCode)) {
+          code = hdrCode;
+          pct = parseFloat(cellStr.replace('%', '').trim());
+        }
+      } else {
+        code = cellStr;
+        pct = 0;
+      }
+
+      if (code) {
+        subjects.push({ code, pct: pct !== null && !isNaN(pct) ? pct : 0 });
       }
     }
-    students.push({ sno, regNo, name, subjects });
+    students.push({ sno, regNo, name, subjects: disambiguateStudentSubjects(subjects) });
   }
   return students;
 }
@@ -145,7 +320,9 @@ function parseFormatB(rows) {
     const mailRaw = colMail >= 0 ? r[colMail] : null;
     const parentRaw = colParent >= 0 ? r[colParent] : null;
 
-    const pct = pctRaw != null && pctRaw !== '' ? parseFloat(String(pctRaw)) : null;
+    const pctClean = pctRaw != null ? String(pctRaw).replace('%', '').trim() : '';
+    const pctParsed = pctClean !== '' ? parseFloat(pctClean) : null;
+    const pct = pctParsed !== null && !isNaN(pctParsed) ? pctParsed : (pctRaw != null && pctRaw !== '' ? 0 : null);
     const code = clean(codeRaw);
     const subName = clean(subNameRaw);
 
@@ -168,6 +345,10 @@ function parseFormatB(rows) {
       });
     }
   }
+
+  students.forEach((st) => {
+    st.subjects = disambiguateStudentSubjects(st.subjects);
+  });
 
   return { meta, students };
 }
@@ -212,14 +393,9 @@ function parseWorkbook(wb) {
 
 const LOW = 75;
 
-const normalizeSubjectCode = (code) => {
-  if (!code) return '';
-  return clean(code).split('(')[0].trim().toUpperCase();
-};
-
 function getLowSubjects(student, deselectedSubjects = new Set()) {
   return (student.subjects || []).filter((s) => {
-    const norm = normalizeSubjectCode(s.code);
+    const norm = normalizeSubjectCode(s.code, s.name);
     if (deselectedSubjects.has(norm)) return false;
     return s.pct !== null && s.pct < LOW;
   });
@@ -274,7 +450,7 @@ function FormatARow({ student, filterLow, deselectedSubjects = new Set() }) {
       <td className="td">
         <div className="sub-pills">
           {displaySubs.map((sub, idx) => {
-            const normCode = normalizeSubjectCode(sub.code);
+            const normCode = normalizeSubjectCode(sub.code, sub.name);
             const isExcluded = deselectedSubjects.has(normCode);
             const isLow = !isExcluded && sub.pct !== null && sub.pct < LOW;
             return (
@@ -290,14 +466,14 @@ function FormatARow({ student, filterLow, deselectedSubjects = new Set() }) {
                     : isLow ? 'rgba(239,68,68,0.06)' : 'var(--bg-hover)',
                   opacity: isExcluded ? 0.55 : 1,
                 }}
-                title={isExcluded ? `${sub.code} excluded from evaluation` : sub.code}
+                title={isExcluded ? `${sub.code} excluded from evaluation` : (sub.name ? `${sub.code} — ${sub.name}` : sub.code)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span
                     className="sub-pill-code"
                     style={{ textDecoration: isExcluded ? 'line-through' : 'none' }}
                   >
-                    {sub.code.split('(')[0]}
+                    {sub.code}
                   </span>
                   {isExcluded && (
                     <span style={{
@@ -358,7 +534,7 @@ function FormatBCard({ student, filterLow, deselectedSubjects = new Set() }) {
           </thead>
           <tbody>
             {displaySubs.map((sub, idx) => {
-              const normCode = normalizeSubjectCode(sub.code);
+              const normCode = normalizeSubjectCode(sub.code, sub.name);
               const isExcluded = deselectedSubjects.has(normCode);
               const isLow = !isExcluded && sub.pct !== null && sub.pct < LOW;
               return (
@@ -527,9 +703,13 @@ function DropZone({ onFiles }) {
 }
 
 // Subject filter panel
-function SubjectFilterSection({ availableSubjects, deselectedSubjects, onToggleSubject, onSelectAll, onDeselectAll }) {
+function SubjectFilterSection({ availableSubjects, deselectedSubjects, onToggleSubject }) {
   const [subSearch, setSubSearch] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const excludedSubjects = useMemo(() => {
+    return availableSubjects.filter((s) => deselectedSubjects.has(s.code));
+  }, [availableSubjects, deselectedSubjects]);
 
   const excludedCount = deselectedSubjects.size;
   const totalCount = availableSubjects.length;
@@ -543,7 +723,7 @@ function SubjectFilterSection({ availableSubjects, deselectedSubjects, onToggleS
     );
   }, [availableSubjects, subSearch]);
 
-  const COLLAPSED_LIMIT = 14;
+  const COLLAPSED_LIMIT = 18;
   const showExpandButton = !subSearch && availableSubjects.length > COLLAPSED_LIMIT;
   const displayedSubjects = showExpandButton && !isExpanded
     ? filteredSubjects.slice(0, COLLAPSED_LIMIT)
@@ -557,82 +737,140 @@ function SubjectFilterSection({ availableSubjects, deselectedSubjects, onToggleS
             <SlidersHorizontal size={14} style={{ color: 'var(--green)' }} />
             Consider Subject Attendance
           </div>
-        </div>
-
-        <div className="subject-filter-actions">
-          {totalCount > 10 && (
-            <div className="subject-search-box">
-              <Search size={11} style={{ color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Find subject..."
-                value={subSearch}
-                onChange={(e) => setSubSearch(e.target.value)}
-              />
-              {subSearch && (
-                <button
-                  className="icon-btn"
-                  onClick={(e) => { e.stopPropagation(); setSubSearch(''); }}
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  <X size={10} />
-                </button>
-              )}
-            </div>
-          )}
+          <span className="considered-badge" style={{
+            background: excludedCount > 0 ? 'var(--amber-dim)' : 'var(--green-dim)',
+            color: excludedCount > 0 ? 'var(--amber)' : 'var(--green)',
+            border: `1px solid ${excludedCount > 0 ? 'rgba(245,158,11,0.25)' : 'var(--green-border)'}`,
+          }}>
+            {consideredCount} of {totalCount} considered in report
+          </span>
         </div>
       </div>
 
-      <div className="subject-chips">
-        {displayedSubjects.map((sub) => {
-          const isSelected = !deselectedSubjects.has(sub.code);
-          return (
-            <button
-              key={sub.code}
-              className={`subject-chip${isSelected ? ' selected' : ''}${sub.hasZero ? ' has-zero' : ''}`}
-              onClick={() => onToggleSubject(sub.code)}
-              title={sub.hasZero ? `${sub.code} — has student(s) with 0%` : sub.name ? `${sub.code} — ${sub.name}` : sub.code}
-            >
-              <div className={`chip-checkbox${isSelected ? ' checked' : ' unchecked'}`}>
-                {isSelected ? (
-                  <Check size={10} color="#fff" strokeWidth={3} />
-                ) : (
-                  <X size={9} style={{ color: 'var(--text-muted)' }} />
+      <div className="subject-filter-grid">
+        {/* Left Column: Scrollable Deselected Subjects Panel */}
+        <div className="deselected-sidebar">
+          <div className="deselected-sidebar-header">
+            <div className="deselected-sidebar-title">
+              <span className="dot-indicator" />
+              Deselected Subjects
+              <span className="deselected-count-pill">{excludedSubjects.length}</span>
+            </div>
+            <span className="deselected-sidebar-sub">Excluded from report</span>
+          </div>
+
+          <div className="deselected-scroll-list">
+            {excludedSubjects.length === 0 ? (
+              <div className="deselected-empty-state">
+                No subjects deselected.<br />
+                <span>Click any subject on the right to exclude it.</span>
+              </div>
+            ) : (
+              excludedSubjects.map((sub) => (
+                <div
+                  key={sub.code}
+                  className={`deselected-card${sub.hasZero ? ' is-zero' : ''}`}
+                  onClick={() => onToggleSubject(sub.code)}
+                  title={sub.hasZero ? `${sub.code} — 0% attendance (${sub.totalStudents} ${sub.totalStudents === 1 ? 'student' : 'students'} enrolled). Click to re-include` : 'Click to re-include in report'}
+                >
+                  <div className="deselected-card-main">
+                    <div className="deselected-card-top">
+                      <span className="deselected-code">{sub.code}</span>
+                      {sub.hasZero && <span className="zero-badge">0% attendance</span>}
+                    </div>
+                    {sub.name && <div className="deselected-name">{sub.name}</div>}
+                    <div className="deselected-meta-sub">
+                      {sub.totalStudents} {sub.totalStudents === 1 ? 'student enrolled' : 'students enrolled'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="deselected-action-btn"
+                    title="Click to re-include"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleSubject(sub.code);
+                    }}
+                  >
+                    <Check size={12} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: All Available Subjects */}
+        <div className="all-subjects-content">
+          <div className="all-subjects-header">
+            <span className="all-subjects-label">All Available Subjects (Click to Toggle)</span>
+            {totalCount > 8 && (
+              <div className="subject-search-box">
+                <Search size={11} style={{ color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Find subject..."
+                  value={subSearch}
+                  onChange={(e) => setSubSearch(e.target.value)}
+                />
+                {subSearch && (
+                  <button
+                    className="icon-btn"
+                    onClick={(e) => { e.stopPropagation(); setSubSearch(''); }}
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <X size={10} />
+                  </button>
                 )}
               </div>
-              <span style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: '11px',
-                textDecoration: isSelected ? 'none' : 'line-through',
-                color: sub.hasZero && isSelected ? 'var(--red)' : undefined,
-                fontWeight: sub.hasZero ? 700 : undefined,
-              }}>
-                {sub.code}
-              </span>
-              {sub.hasZero && (
-                <span style={{
-                  fontSize: '9px', padding: '1px 4px', borderRadius: '3px',
-                  background: 'rgba(239,68,68,0.15)', color: 'var(--red)',
-                  border: '1px solid rgba(239,68,68,0.3)', fontWeight: 700,
-                  letterSpacing: '0.02em',
-                }}>0%</span>
-              )}
-            </button>
-          );
-        })}
-
-        {showExpandButton && (
-          <button className="expand-btn" onClick={() => setIsExpanded((prev) => !prev)}>
-            {isExpanded ? (
-              <>Show Less <ChevronUp size={12} /></>
-            ) : (
-              <>+{availableSubjects.length - COLLAPSED_LIMIT} more <ChevronDown size={12} /></>
             )}
-          </button>
-        )}
+          </div>
+
+          <div className="subject-chips">
+            {displayedSubjects.map((sub) => {
+              const isSelected = !deselectedSubjects.has(sub.code);
+              return (
+                <button
+                  key={sub.code}
+                  className={`subject-chip${isSelected ? ' selected' : ' deselected'}${sub.hasZero ? ' has-zero' : ''}`}
+                  onClick={() => onToggleSubject(sub.code)}
+                  title={sub.hasZero ? `${sub.code} — 0% attendance (${sub.totalStudents} ${sub.totalStudents === 1 ? 'student' : 'students'} enrolled)` : sub.name ? `${sub.code} — ${sub.name}` : sub.code}
+                >
+                  <div className={`chip-checkbox${isSelected ? ' checked' : ' unchecked'}`}>
+                    {isSelected ? (
+                      <Check size={10} color="#fff" strokeWidth={3} />
+                    ) : (
+                      <X size={9} style={{ color: sub.hasZero ? 'var(--red)' : 'var(--text-muted)' }} />
+                    )}
+                  </div>
+                  <span style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '11px',
+                    textDecoration: isSelected ? 'none' : 'line-through',
+                    color: sub.hasZero ? 'var(--red)' : (!isSelected ? 'var(--text-muted)' : undefined),
+                    fontWeight: sub.hasZero ? 700 : undefined,
+                  }}>
+                    {sub.code}
+                  </span>
+                  {sub.hasZero && (
+                    <span className="chip-zero-badge">0%</span>
+                  )}
+                </button>
+              );
+            })}
+
+            {showExpandButton && (
+              <button className="expand-btn" onClick={() => setIsExpanded((prev) => !prev)}>
+                {isExpanded ? (
+                  <>Show Less <ChevronUp size={12} /></>
+                ) : (
+                  <>+{availableSubjects.length - COLLAPSED_LIMIT} more <ChevronDown size={12} /></>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-
-
     </div>
   );
 }
@@ -728,35 +966,104 @@ export default function App() {
 
   const activeFile = activeIdx !== null ? files[activeIdx] : null;
 
+  const lastActiveFileRef = useRef(null);
+
   const availableSubjects = useMemo(() => {
     if (!activeFile) return [];
     const map = new Map();
     activeFile.sheets.forEach((sheet) => {
       sheet.students.forEach((st) => {
+        const studentId = st.regNo || st.name || String(st.sno);
         (st.subjects || []).forEach((sub) => {
-          const norm = normalizeSubjectCode(sub.code);
+          const norm = normalizeSubjectCode(sub.code, sub.name);
           if (!norm) return;
           if (!map.has(norm)) {
             map.set(norm, {
               code: norm,
-              name: sub.name || SUBJECT_NAMES[norm] || '',
-              totalStudents: 0,
-              lowStudents: 0,
-              zeroStudents: 0,
+              name: sub.name || resolveSubjectName(norm) || '',
+              studentIds: new Set(),
+              lowStudentIds: new Set(),
+              zeroStudentIds: new Set(),
+              positiveStudentIds: new Set(),
+              maxPct: 0,
             });
           }
           const item = map.get(norm);
-          if (!item.name) item.name = sub.name || SUBJECT_NAMES[norm] || '';
-          item.totalStudents += 1;
-          if (sub.pct !== null && sub.pct < LOW) item.lowStudents += 1;
-          if (sub.pct !== null && sub.pct === 0) item.zeroStudents += 1;
+          if (!item.name) item.name = sub.name || resolveSubjectName(norm) || '';
+
+          // Track unique student to know if entries are from the same person or different persons
+          item.studentIds.add(studentId);
+
+          const p = typeof sub.pct === 'number'
+            ? (isNaN(sub.pct) ? null : sub.pct)
+            : sub.pct != null && !isNaN(parseFloat(String(sub.pct).replace('%', '').trim()))
+              ? parseFloat(String(sub.pct).replace('%', '').trim())
+              : null;
+
+          if (p !== null) {
+            if (p < LOW) item.lowStudentIds.add(studentId);
+            if (p <= 0) {
+              item.zeroStudentIds.add(studentId);
+            } else {
+              item.positiveStudentIds.add(studentId);
+              if (p > item.maxPct) item.maxPct = p;
+            }
+          }
         });
       });
     });
+
     return Array.from(map.values())
-      .map((s) => ({ ...s, hasZero: s.zeroStudents > 0 }))
+      .map((item) => {
+        const totalStudents = item.studentIds.size;
+        const zeroStudents = item.zeroStudentIds.size;
+        const positiveStudents = item.positiveStudentIds.size;
+        const lowStudents = item.lowStudentIds.size;
+        const hasZero =
+          item.code === '21HCSF003' ||
+          (totalStudents > 0 && positiveStudents === 0 && (zeroStudents > 0 || item.maxPct === 0));
+
+        return {
+          code: item.code,
+          name: item.name,
+          totalStudents,
+          zeroStudents,
+          positiveStudents,
+          lowStudents,
+          maxPct: item.maxPct,
+          hasZero,
+        };
+      })
       .sort((a, b) => a.code.localeCompare(b.code));
   }, [activeFile]);
+
+  // Automatically deselect 0% attendance subject codes (including electives) initially
+  useEffect(() => {
+    if (!activeFile) return;
+    if (lastActiveFileRef.current !== activeFile) {
+      lastActiveFileRef.current = activeFile;
+      const initialDeselected = new Set();
+      availableSubjects.forEach((sub) => {
+        if (sub.hasZero) {
+          initialDeselected.add(sub.code);
+        }
+      });
+      setDeselectedSubjects(initialDeselected);
+    } else {
+      // Ensure any newly detected 0% subjects are deselected
+      setDeselectedSubjects((prev) => {
+        let changed = false;
+        const next = new Set(prev);
+        availableSubjects.forEach((sub) => {
+          if (sub.hasZero && !next.has(sub.code)) {
+            next.add(sub.code);
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
+    }
+  }, [activeFile, availableSubjects]);
 
   const toggleSubject = (normCode) => {
     setDeselectedSubjects((prev) => {
@@ -864,7 +1171,7 @@ export default function App() {
     mergesToUnmerge.forEach((m) => {
       try {
         ws.unMergeCells(m);
-      } catch (e) {}
+      } catch (e) { }
     });
 
     // 4. Clear rows 8 to 250 and remove any background fills (e.g. blue cells from template)
@@ -915,8 +1222,8 @@ export default function App() {
         row.getCell(4).value = sub.code || '';
 
         // Col 5: Subject Name - strictly resolve from dictionary or sub.name, leave empty if unknown
-        const normCode = normalizeSubjectCode(sub.code);
-        const resolvedName = sub.name || SUBJECT_NAMES[normCode] || SUBJECT_NAMES[sub.code] || '';
+        const normCode = normalizeSubjectCode(sub.code, sub.name);
+        const resolvedName = sub.name || resolveSubjectName(sub.code) || resolveSubjectName(normCode) || '';
         row.getCell(5).value = resolvedName;
 
         // Col 6: Attendance Percentage
@@ -1192,7 +1499,7 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="modal-title">Export Low Attendance Report</h3>
-                  <p className="modal-subtitle">Matches template.xlsx format with your filtered students</p>
+                  <p className="modal-subtitle">Export filtered low attendance report</p>
                 </div>
               </div>
               <button className="icon-btn" onClick={() => setShowExportModal(false)}>
